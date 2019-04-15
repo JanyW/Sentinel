@@ -200,7 +200,7 @@ angular.module('sentinelDashboardApp').controller('AuthorityRuleController', ['$
                         // $scope.machines = data.data;
                         if (data.data) {
                             $scope.machines = [];
-                            $scope.macsInputOptions = [];
+                            $scope.macsInputOptions = [{text:'全部',value:'0:0'}];
                             data.data.forEach(function (item) {
                                 if (item.healthy) {
                                     $scope.macsInputOptions.push({

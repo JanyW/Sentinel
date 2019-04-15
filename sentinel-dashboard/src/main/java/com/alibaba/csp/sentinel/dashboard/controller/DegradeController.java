@@ -15,30 +15,33 @@
  */
 package com.alibaba.csp.sentinel.dashboard.controller;
 
-import java.util.Date;
-import java.util.List;
-
-import javax.servlet.http.HttpServletRequest;
-
-import com.alibaba.csp.sentinel.dashboard.client.SentinelApiClient;
-import com.alibaba.csp.sentinel.dashboard.discovery.MachineInfo;
 import com.alibaba.csp.sentinel.dashboard.auth.AuthService;
 import com.alibaba.csp.sentinel.dashboard.auth.AuthService.AuthUser;
 import com.alibaba.csp.sentinel.dashboard.auth.AuthService.PrivilegeType;
-import com.alibaba.csp.sentinel.slots.block.RuleConstant;
-import com.alibaba.csp.sentinel.util.StringUtil;
-
 import com.alibaba.csp.sentinel.dashboard.datasource.entity.rule.DegradeRuleEntity;
+import com.alibaba.csp.sentinel.dashboard.datasource.entity.rule.ParamFlowRuleEntity;
+import com.alibaba.csp.sentinel.dashboard.discovery.MachineInfo;
 import com.alibaba.csp.sentinel.dashboard.domain.Result;
 import com.alibaba.csp.sentinel.dashboard.repository.rule.InMemDegradeRuleStore;
-
+import com.alibaba.csp.sentinel.dashboard.rule.RuleDynamicProvider;
+import com.alibaba.csp.sentinel.dashboard.rule.RuleDynamicPublisher;
+import com.alibaba.csp.sentinel.dashboard.rule.apollo.RuleType;
+import com.alibaba.csp.sentinel.dashboard.util.StringUtils;
+import com.alibaba.csp.sentinel.slots.block.RuleConstant;
+import com.alibaba.csp.sentinel.util.StringUtil;
+import com.alibaba.fastjson.JSON;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
+
+import javax.servlet.http.HttpServletRequest;
+import java.util.Date;
+import java.util.List;
 
 /**
  * @author leyou
@@ -51,8 +54,13 @@ public class DegradeController {
 
     @Autowired
     private InMemDegradeRuleStore repository;
-    @Autowired
-    private SentinelApiClient sentinelApiClient;
+
+	@Autowired
+	@Qualifier("flowRuleApolloProvider")
+	private RuleDynamicProvider<String> ruleProvider;
+	@Autowired
+	@Qualifier("flowRuleApolloPublisher")
+	private RuleDynamicPublisher<String> rulePublisher;
 
     @Autowired
     private AuthService<HttpServletRequest> authService;
@@ -73,8 +81,15 @@ public class DegradeController {
             return Result.ofFail(-1, "port can't be null");
         }
         try {
-            List<DegradeRuleEntity> rules = sentinelApiClient.fetchDegradeRuleOfMachine(app, ip, port);
-            rules = repository.saveAll(rules);
+            //List<DegradeRuleEntity> rules = sentinelApiClient.fetchDegradeRuleOfMachine(app, ip, port);
+			String appName = StringUtils.getAppName(app, ip, port);
+			String rulesStr = ruleProvider.getRules(appName, RuleType.DEGRADE);
+			List<DegradeRuleEntity> rules = null;
+			if (rulesStr != null) {
+				rules = JSON.parseArray(rulesStr, DegradeRuleEntity.class);
+			}
+
+			rules = repository.saveAll(rules);
             return Result.ofSuccess(rules);
         } catch (Throwable throwable) {
             logger.error("queryApps error:", throwable);
@@ -131,12 +146,10 @@ public class DegradeController {
         entity.setGmtModified(date);
         try {
             entity = repository.save(entity);
+			publishRules(entity.getApp(), entity.getIp(), entity.getPort());
         } catch (Throwable throwable) {
             logger.error("add error:", throwable);
             return Result.ofThrowable(-1, throwable);
-        }
-        if (!publishRules(app, ip, port)) {
-            logger.info("publish degrade rules fail after rule add");
         }
         return Result.ofSuccess(entity);
     }
@@ -183,12 +196,13 @@ public class DegradeController {
         entity.setGmtModified(date);
         try {
             entity = repository.save(entity);
+			if (entity == null) {
+				return Result.ofFail(-1, "save entity fail");
+			}
+			publishRules(entity.getApp(), entity.getIp(), entity.getPort());
         } catch (Throwable throwable) {
             logger.error("save error:", throwable);
             return Result.ofThrowable(-1, throwable);
-        }
-        if (!publishRules(entity.getApp(), entity.getIp(), entity.getPort())) {
-            logger.info("publish degrade rules fail after rule update");
         }
         return Result.ofSuccess(entity);
     }
@@ -208,18 +222,17 @@ public class DegradeController {
         authUser.authTarget(oldEntity.getApp(), PrivilegeType.DELETE_RULE);
         try {
             repository.delete(id);
+			publishRules(oldEntity.getApp(), oldEntity.getIp(), oldEntity.getPort());
         } catch (Throwable throwable) {
             logger.error("delete error:", throwable);
             return Result.ofThrowable(-1, throwable);
         }
-        if (!publishRules(oldEntity.getApp(), oldEntity.getIp(), oldEntity.getPort())) {
-            logger.info("publish degrade rules fail after rule delete");
-        }
         return Result.ofSuccess(id);
     }
 
-    private boolean publishRules(String app, String ip, Integer port) {
-        List<DegradeRuleEntity> rules = repository.findAllByMachine(MachineInfo.of(app, ip, port));
-        return sentinelApiClient.setDegradeRuleOfMachine(app, ip, port, rules);
+    private void publishRules(String app, String ip, Integer port) throws Exception {
+		List<DegradeRuleEntity> rules = repository.findAllByMachine(MachineInfo.of(app, ip, port));
+		String appName = StringUtils.getAppName(app, ip, port);
+		rulePublisher.publish(appName, RuleType.DEGRADE, JSON.toJSONString(rules));
     }
 }

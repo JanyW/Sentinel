@@ -57,8 +57,10 @@ app.controller('IdentityCtl', ['$scope', '$stateParams', 'IdentityService',
             thresholdType: 0
         },
         app: $scope.app,
-        ip: mac[0],
-        port: mac[1]
+        //ip: mac[0],
+        //port: mac[1]
+        ip: 0,
+        port: 0
       };
 
       flowRuleDialogScope.flowRuleDialog = {
@@ -133,8 +135,10 @@ app.controller('IdentityCtl', ['$scope', '$stateParams', 'IdentityService',
         resource: resource,
         limitApp: 'default',
         app: $scope.app,
-        ip: mac[0],
-        port: mac[1]
+        //ip: mac[0],
+        //port: mac[1]
+        ip: 0,
+        port: 0
       };
 
       degradeRuleDialogScope.degradeRuleDialog = {
@@ -235,8 +239,10 @@ app.controller('IdentityCtl', ['$scope', '$stateParams', 'IdentityService',
           authorityRuleDialogScope = $scope.$new(true);
           authorityRuleDialogScope.currentRule = {
               app: $scope.app,
-              ip: mac[0],
-              port: mac[1],
+              //ip: mac[0],
+              //port: mac[1]
+              ip: 0,
+              port: 0,
               rule: {
                   resource: resource,
                   strategy: 0,
@@ -314,8 +320,10 @@ app.controller('IdentityCtl', ['$scope', '$stateParams', 'IdentityService',
           paramFlowRuleDialogScope = $scope.$new(true);
           paramFlowRuleDialogScope.currentRule = {
               app: $scope.app,
-              ip: mac[0],
-              port: mac[1],
+              //ip: mac[0],
+              //port: mac[1]
+              ip: 0,
+              port: 0,
               rule: {
                   resource: resource,
                   grade: 1,
