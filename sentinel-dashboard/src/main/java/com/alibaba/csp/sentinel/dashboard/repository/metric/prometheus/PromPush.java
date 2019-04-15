@@ -32,18 +32,19 @@ public class PromPush implements ApplicationListener<MetricEvent> {
 	public PromPush() {
 		String url = System.getProperty("prom.url");
 		registry = new CollectorRegistry();
-		gauge = Gauge.build().name("sentinel_qps").labelNames("res", "type").help("sentinel_qps").register(registry);
-		histogram = Histogram.build().name("sentinel_rt").labelNames("res").help("sentinel_rt").register(registry);
+		gauge = Gauge.build().name("sentinel_qps").labelNames("app", "res", "type").help("sentinel_qps").register(registry);
+		histogram = Histogram.build().name("sentinel_rt").labelNames("app", "res").help("sentinel_rt").register(registry);
 		pushGateway = new PushGateway(url);
 	}
 
 	public void push(MetricEntity metric) {
+		String app = metric.getApp();
 		String res = metric.getResource();
-		gauge.labels(res, "pass").set(metric.getPassQps());
-		gauge.labels(res, "success").set(metric.getSuccessQps());
-		gauge.labels(res, "block").set(metric.getBlockQps());
-		gauge.labels(res, "exception").set(metric.getExceptionQps());
-		histogram.labels(res).observe(metric.getRt());
+		gauge.labels(app, res, "pass").set(metric.getPassQps());
+		gauge.labels(app, res, "success").set(metric.getSuccessQps());
+		gauge.labels(app, res, "block").set(metric.getBlockQps());
+		gauge.labels(app, res, "exception").set(metric.getExceptionQps());
+		histogram.labels(app, res).observe(metric.getRt());
 		try {
 			pushGateway.push(registry, "sentinel");
 		} catch (IOException e) {
