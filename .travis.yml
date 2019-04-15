@@ -18,8 +18,8 @@ install:
 
 after_success:
   - cd sentinel-dashboard
-  - docker build -t janyw/sentinel_dashboard:latest .
-  - docker push janyw/sentinel_dashboard:latest
+  - docker build -t janyw/sentinel-dashboard:latest .
+  - docker push janyw/sentinel-dashboard:latest
 
 cache:
   directories:
