@@ -3,6 +3,9 @@ language: java
 sudo: required
 dist: trusty
 
+services:
+  - docker
+
 matrix:
   include:
   - jdk: oraclejdk8
@@ -12,12 +15,18 @@ matrix:
   allow_failures:
   - env: BUILD_JDK=ORACLE_JDK_11
 
+before_install:
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+
 # https://docs.travis-ci.com/user/languages/java/#maven-dependency-management
 install:
   - mvn install -DskipTests=true -Dmaven.javadoc.skip=true -B -V -DminimumPriority=1
 
 after_success:
-  - bash <(curl -s https://codecov.io/bash)
+  - cd sentinel-dashboard
+  - ls
+  - docker build -t janyw/sentinel_dashboard .
+  - docker push janyw/sentinel_dashboard
 
 cache:
   directories:
