@@ -15,20 +15,20 @@
  */
 package com.alibaba.csp.sentinel.dashboard.repository.metric;
 
+import com.alibaba.csp.sentinel.dashboard.datasource.entity.MetricEntity;
+import com.alibaba.csp.sentinel.dashboard.repository.metric.prometheus.MetricEvent;
+import com.alibaba.csp.sentinel.util.StringUtil;
+import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
+import org.springframework.stereotype.Component;
+
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
-
-import com.alibaba.csp.sentinel.dashboard.datasource.entity.MetricEntity;
-import com.alibaba.csp.sentinel.util.StringUtil;
-
-import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap;
-import org.springframework.stereotype.Component;
 
 /**
  * Caches metrics data in a period of time in memory.
@@ -46,6 +46,8 @@ public class InMemoryMetricsRepository implements MetricsRepository<MetricEntity
      */
     private Map<String, Map<String, ConcurrentLinkedHashMap<Long, MetricEntity>>> allMetrics = new ConcurrentHashMap<>();
 
+	@Autowired
+	ApplicationContext applicationContext;
 
 
     @Override
@@ -69,6 +71,7 @@ public class InMemoryMetricsRepository implements MetricsRepository<MetricEntity
             return;
         }
         metrics.forEach(this::save);
+		applicationContext.publishEvent(new MetricEvent(this, metrics));
     }
 
     @Override
