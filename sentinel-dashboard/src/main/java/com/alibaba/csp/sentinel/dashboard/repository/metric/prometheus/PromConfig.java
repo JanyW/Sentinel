@@ -22,9 +22,9 @@ public class PromConfig implements AsyncConfigurer {
 		//使用Spring内置线程池任务对象
 		ThreadPoolTaskExecutor taskExecutor = new ThreadPoolTaskExecutor();
 		//设置线程池参数
-		taskExecutor.setCorePoolSize(5);
-		taskExecutor.setMaxPoolSize(10);
-		taskExecutor.setQueueCapacity(25);
+		taskExecutor.setCorePoolSize(10);
+		taskExecutor.setMaxPoolSize(1000);
+		taskExecutor.setQueueCapacity(10000);
 		taskExecutor.initialize();
 		return taskExecutor;
 	}
