@@ -23,7 +23,7 @@ public class PromConfig implements AsyncConfigurer {
 		ThreadPoolTaskExecutor taskExecutor = new ThreadPoolTaskExecutor();
 		//设置线程池参数
 		taskExecutor.setCorePoolSize(10);
-		taskExecutor.setMaxPoolSize(1000);
+		taskExecutor.setMaxPoolSize(100);
 		taskExecutor.setQueueCapacity(10000);
 		taskExecutor.initialize();
 		return taskExecutor;
