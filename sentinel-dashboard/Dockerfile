@@ -2,6 +2,10 @@ FROM openjdk:8u201-alpine3.9
 
 MAINTAINER janyw@foxmail.com
 
+RUN apk add tzdata && cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime \
+    && echo "Asia/Shanghai" > /etc/timezone \
+    && apk del tzdata
+
 ENV APOLLO_API_URL default
 ENV APOLLO_API_TOKEN bdefault
 ENV APOLLO_API_APPID default
