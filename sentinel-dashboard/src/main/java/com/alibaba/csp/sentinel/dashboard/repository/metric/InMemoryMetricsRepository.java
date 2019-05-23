@@ -71,7 +71,7 @@ public class InMemoryMetricsRepository implements MetricsRepository<MetricEntity
             return;
         }
         metrics.forEach(this::save);
-		applicationContext.publishEvent(new MetricEvent(this, metrics));
+		//applicationContext.publishEvent(new MetricEvent(this, metrics));
     }
 
     @Override

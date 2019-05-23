@@ -13,8 +13,8 @@ import java.util.concurrent.Executor;
  * @author: rooot
  * @date: 2019-04-12
  */
-@EnableAsync
-@Configuration
+//@EnableAsync
+//@Configuration
 public class PromConfig implements AsyncConfigurer {
 
 	@Override
